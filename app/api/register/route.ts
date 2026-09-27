@@ -1,39 +1,26 @@
-import { NextResponse } from "next/server"
-import bcrypt from "bcryptjs"
-import { prisma } from "@/lib/prisma"
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma"; // أو حسب مسار ملف prisma عندك
 
 export async function POST(req: Request) {
   try {
-    const { name, email, password, role } = await req.json()
+    console.log("1. تم استقبال الطلب بنجاح");
+    
+    const body = await req.json();
+    console.log("2. البيانات المستلمة:", body);
 
-    if (!email || !password) {
-      return NextResponse.json({ error: "Please enter your email and password" }, { status: 400 })
-    }
+    // اختبار الاتصال بالداتا بيز
+    console.log("3. جاري الاتصال بقاعدة البيانات...");
+    const userCount = await prisma.user.count(); 
+    console.log("4. تم الاتصال بقاعدة البيانات! عدد المستخدمين الحاليين:", userCount);
 
-    // التحقق من وجود المستخدم سابقاً
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
-    })
+    // ... باقي كود إنشاء المستخدم الخاص بك ...
 
-    if (existingUser) {
-      return NextResponse.json({ error: "The email is already registered" }, { status: 400 })
-    }
-
-    // تشفير كلمة المرور
-    const hashedPassword = await bcrypt.hash(password, 10)
-
-    // إنشاء المستخدم في قاعدة البيانات على السيرفر
-    const user = await prisma.user.create({
-      data: {
-        name,
-        email,
-        password: hashedPassword,
-        role: role || "STUDENT",
-      },
-    })
-
-    return NextResponse.json({ message: "Account is created successfully", userId: user.id }, { status: 201 })
+    return NextResponse.json({ message: "Success" });
   } catch (error) {
-    return NextResponse.json({ error: "There was an error while registering" }, { status: 500 })
+    console.error("❌ حدث خطأ دقيق هنا:", error);
+    return NextResponse.json(
+      { error: "There was an error while registering", details: String(error) },
+      { status: 500 }
+    );
   }
 }
