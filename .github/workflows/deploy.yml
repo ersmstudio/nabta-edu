@@ -1,24 +1,22 @@
-name: Deploy Nabta Edu to Ubuntu Server
+name: Deploy Nabta Edu
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ] 
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: self-hosted
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Deploy & Restart Application
-        run: |
-          cd ~/apps/nabta-edu
-          git pull origin main
-          npm install --legacy-peer-deps
-          npx prisma generate
-          npm run build
-          pm2 reload nabta-edu || pm2 start npm --name "nabta-edu" -- start
-          pm2 save
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
+      - name: Build Next.js App
+        run: npm run build
