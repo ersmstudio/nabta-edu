@@ -1,4 +1,4 @@
-name: Deploy Nabta Edu to Ubuntu Server
+name: NABTA_EDU_BUILD
 
 on:
   push:
