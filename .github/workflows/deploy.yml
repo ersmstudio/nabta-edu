@@ -1,4 +1,4 @@
-name: NABTA_EDU_SERVER
+name: Deploy Nabta Edu to Ubuntu Server
 
 on:
   push:
@@ -7,26 +7,18 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Connect to Tailscale
-        uses: tailscale/github-action@v2
-        with:
-          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
-          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
-          tags: tag:prod
+    runs-on: self-hosted
 
-      - name: Deploying via SSH to Dell T3500
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          password: ${{ secrets.SERVER_PASSWORD }}
-          script: |
-            cd ~/nabta-edu
-            git pull origin main
-            npm install --legacy-peer-deps
-            npx prisma generate
-            npm run build
-            pm2 reload nabta-edu || pm2 start npm --name "nabta-edu" -- start
-            pm2 save
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Deploy & Restart Application
+        run: |
+          cd ~/apps/nabta-edu
+          git pull origin main
+          npm install --legacy-peer-deps
+          npx prisma generate
+          npm run build
+          pm2 reload nabta-edu || pm2 start npm --name "nabta-edu" -- start
+          pm2 save
