@@ -1,4 +1,4 @@
-name: NABTA_EDU_BUILD
+name: NABTA_EDU_SERVER
 
 on:
   push:
@@ -9,10 +9,12 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Connect to Tailscale Network
+      - name: Connect to Tailscale
         uses: tailscale/github-action@v2
         with:
-          authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:prod
 
       - name: Deploying via SSH to Dell T3500
         uses: appleboy/ssh-action@v1.0.3
@@ -21,7 +23,7 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
           script: |
-            cd ~/apps/nabta-edu
+            cd ~/nabta-edu
             git pull origin main
             npm install --legacy-peer-deps
             npx prisma generate
