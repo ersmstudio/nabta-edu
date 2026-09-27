@@ -2,7 +2,7 @@ name: Deploy Nabta Edu
 
 on:
   push:
-    branches: [ main ] 
+    branches: [ main ] # or master
 
 jobs:
   build-and-deploy:
@@ -20,3 +20,8 @@ jobs:
 
       - name: Build Next.js App
         run: npm run build
+
+      - name: Restart Application with PM2
+        run: |
+          npm install -g pm2 || true
+          pm2 start npm --name "nabta-edu" -- start || pm2 restart nabta-edu
