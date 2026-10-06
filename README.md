@@ -1,36 +1,36 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# نبتة التعليمية
 
-## Getting Started
+منصة ثنائية اللغة للتعلّم والإبداع مبنية باستخدام Next.js 15 وReact 19 وPrisma وPostgreSQL. تتضمن الصفحة الرئيسية ومسارات تعلّم مبدئية، وإنشاء الحساب وتسجيل الدخول بالبريد وكلمة المرور.
 
-First, run the development server:
+## المتطلبات
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- Node.js بإصدار 20 أو أحدث.
+- قاعدة بيانات PostgreSQL.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## التشغيل المحلي
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. ثبّت الحزم باستخدام `npm install`.
+2. انسخ `.env.example` إلى `.env`، ثم أدخل رابط PostgreSQL ومفتاحًا عشوائيًا قويًا في `AUTH_SECRET`.
+3. طبّق مخطط قاعدة البيانات باستخدام `npx prisma migrate deploy`.
+4. شغّل `npm run dev` وافتح `http://localhost:3000`.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+لإنشاء ترحيل جديد بعد تعديل مخطط Prisma استخدم `npx prisma migrate dev --name وصف-التغيير`.
 
-## Learn More
+## الأوامر
 
-To learn more about Next.js, take a look at the following resources:
+- `npm run dev` تشغيل بيئة التطوير.
+- `npm run lint` فحص قواعد ESLint.
+- `npm run build` إنشاء نسخة الإنتاج.
+- `npm run start` تشغيل نسخة الإنتاج بعد البناء.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## المصادقة
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+تُنشأ الحسابات عبر `POST /api/register` مع الاسم والبريد وكلمة مرور لا تقل عن 8 أحرف. تُحفظ كلمة المرور بعد تشفيرها باستخدام bcrypt. يسجل المستخدم دخوله من `/signin`، وتُدار جلسات المصادقة باستخدام JWT عبر Auth.js.
 
-## Deploy on Vercel
+## اللغة والموقع
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+تبدأ الواجهة بلغة المتصفح، ويمكن تغييرها من زر اللغة. عند أول زيارة، يعرض الموقع خيار تحديد اللغة من الدولة عبر GPS؛ لا يُطلب الموقع إلا بعد اختيار المستخدم لهذا الخيار، ثم يطلب المتصفح إذن الموقع. تُرسل الإحداثيات إلى واجهة الموقع الخلفية، ومنها إلى خدمة `GEOCODING_URL` (افتراضيًا OpenStreetMap Nominatim) لمعرفة رمز الدولة. يُستخدم رمز الدولة لاختيار العربية للدول العربية أو الإنجليزية لغيرها. يتطلب GPS تشغيل الموقع على HTTPS أو localhost.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+خدمة Nominatim العامة منخفضة السعة وتحدد حدًا أقصى قدره طلب واحد في الثانية للتطبيق، لذلك يمر الطلب عبر الواجهة الخلفية ويُبطّأ داخل عملية الخادم. يُحفظ اختيار اللغة على الجهاز لتجنّب تكرار الطلب هناك. عند تشغيل عدة نسخ من الخادم، استخدم محدد معدل مشتركًا أو خدمة جغرافية مخصصة كي يظل حد الخدمة محترمًا. للتوسّع، غيّر `GEOCODING_URL` إلى مزود مناسب أو خادم Nominatim تديره بنفسك. يظهر اعتماد OpenStreetMap وسياسة الخدمة للمستخدم قبل مشاركة الموقع.
+
+قبل النشر، اضبط `DATABASE_URL` و`AUTH_SECRET` في بيئة الاستضافة وشغّل ترحيلات Prisma. مسارات الكورسات في الصفحة الحالية واجهة تمهيدية؛ لم تُضف بعد قاعدة بيانات للدورات أو لوحة إدارة ومحتوى دروس.
