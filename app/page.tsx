@@ -2,15 +2,16 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { signOut, useSession } from "next-auth/react";
 import { useLocale } from "./locale-provider";
 import { LanguageToggle } from "./language-toggle";
 import { useAppState } from "./app-state-provider";
 
 const courses = [
-  { icon: "✏️", title: { ar: "الأنيميشن والرسم", en: "Animation and art" }, text: { ar: "ارسم أفكارك وحوّلها إلى حكايات متحركة.", en: "Draw your ideas and turn them into animated stories." }, tag: { ar: "إبداع", en: "Creativity" }, color: "peach" },
-  { icon: "⌘", title: { ar: "البرمجة والتقنية", en: "Coding and technology" }, text: { ar: "ابدأ من الأساسيات واصنع مشاريعك الأولى.", en: "Learn the basics and build your first projects." }, tag: { ar: "تقنية", en: "Technology" }, color: "lavender" },
-  { icon: "🌱", title: { ar: "الطبيعة والعلوم", en: "Nature and science" }, text: { ar: "اكتشف العالم من حولك بتجارب ممتعة.", en: "Explore the world around you through fun experiments." }, tag: { ar: "اكتشاف", en: "Discovery" }, color: "mint" },
+  { icon: "✏️", title: { ar: "الأنيميشن والرسم", en: "Animation and art" }, text: { ar: "ارسم أفكارك وحوّلها إلى حكايات متحركة.", en: "Draw your ideas and turn them into animated stories." }, tag: { ar: "إبداع", en: "Creativity" }, color: "peach", href: "/courses/Animation" },
+  { icon: "⌘", title: { ar: "البرمجة والتقنية", en: "Coding and technology" }, text: { ar: "ابدأ من الأساسيات واصنع مشاريعك الأولى.", en: "Learn the basics and build your first projects." }, tag: { ar: "تقنية", en: "Technology" }, color: "lavender", href: "/courses/Programming" },
+  { icon: "🌱", title: { ar: "الطبيعة والعلوم", en: "Nature and science" }, text: { ar: "اكتشف العالم من حولك بتجارب ممتعة.", en: "Explore the world around you through fun experiments." }, tag: { ar: "اكتشاف", en: "Discovery" }, color: "mint", href: "/courses/Science" },
 ];
 
 export default function Page() {
@@ -60,7 +61,7 @@ export default function Page() {
 
       <section className="courses-section" id="courses">
         <div className="section-heading"><div><span className="section-kicker">{t("pathsGrow")}</span><h2>{t("whereStart")}</h2><p>{t("choosePath")}</p></div><label className="course-search"><span>⌕</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t("searchPath")} aria-label={t("searchPath")} /></label></div>
-        <div className="course-grid">{shownCourses.length ? shownCourses.map((course, index) => <a className={`course-card ${course.color}`} href="#about" key={course.color}><div className="course-top"><span className="course-icon">{course.icon}</span><span className="course-tag">{course.tag[locale]}</span></div><h3>{course.title[locale]}</h3><p>{course.text[locale]}</p><div className="course-bottom"><span>{t("explorePath")}</span><span className="arrow-circle">←</span></div><span className="card-number">0{index + 1}</span></a>) : <p className="empty-state">{t("noResults")}</p>}</div>
+        <div className="course-grid">{shownCourses.length ? shownCourses.map((course, index) => <Link className={`course-card ${course.color}`} href={course.href} key={course.color}><div className="course-top"><span className="course-icon">{course.icon}</span><span className="course-tag">{course.tag[locale]}</span></div><h3>{course.title[locale]}</h3><p>{course.text[locale]}</p><div className="course-bottom"><span>{t("explorePath")}</span><span className="arrow-circle">←</span></div><span className="card-number">0{index + 1}</span></Link>) : <p className="empty-state">{t("noResults")}</p>}</div>
       </section>
 
       <section className="about-strip" id="about"><div className="about-leaf">✿</div><div><span className="section-kicker">{t("learnOurWay")}</span><h2>{t("notJustCourses")}<br /><span>{t("spaceToGrow")}</span></h2></div><p>{t("aboutText")}</p><a className="button button-light" href="#courses">{t("ourStory")} <span>←</span></a></section>
