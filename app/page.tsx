@@ -5,6 +5,7 @@ import Image from "next/image";
 import { signOut, useSession } from "next-auth/react";
 import { useLocale } from "./locale-provider";
 import { LanguageToggle } from "./language-toggle";
+import { useAppState } from "./app-state-provider";
 
 const courses = [
   { icon: "✏️", title: { ar: "الأنيميشن والرسم", en: "Animation and art" }, text: { ar: "ارسم أفكارك وحوّلها إلى حكايات متحركة.", en: "Draw your ideas and turn them into animated stories." }, tag: { ar: "إبداع", en: "Creativity" }, color: "peach" },
@@ -15,7 +16,7 @@ const courses = [
 export default function Page() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [query, setQuery] = useState("");
+  const { courseQuery: query, setCourseQuery: setQuery } = useAppState();
   const { data: session, status } = useSession();
   const { locale, t } = useLocale();
   const isSignedIn = status === "authenticated";
