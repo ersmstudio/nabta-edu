@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma"
 import CredentialsProvider from "next-auth/providers/credentials"
 import bcrypt from "bcryptjs"
 import type { Role } from "@prisma/client"
+import { isConfiguredAdmin } from "@/lib/authorization"
 
 const validRoles = new Set<Role>(["USER", "STUDENT", "INSTRUCTOR", "ADMIN"])
 
@@ -45,16 +46,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.role = user.role
+        token.role = isConfiguredAdmin(user.email) ? "ADMIN" : user.role
       }
       return token
     },
     async session({ session, token }) {
       if (session.user) {
         const role = token.role
-        session.user.role = typeof role === "string" && validRoles.has(role as Role)
-          ? (role as Role)
-          : "STUDENT"
+        session.user.id = token.sub ?? ""
+        session.user.role = isConfiguredAdmin(session.user.email)
+          ? "ADMIN"
+          : typeof role === "string" && validRoles.has(role as Role)
+            ? (role as Role)
+            : "STUDENT"
       }
       return session
     },

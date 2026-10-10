@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { signOut, useSession } from "next-auth/react";
@@ -13,6 +13,7 @@ const courses = [
   { icon: "⌘", title: { ar: "البرمجة والتقنية", en: "Coding and technology" }, text: { ar: "ابدأ من الأساسيات واصنع مشاريعك الأولى.", en: "Learn the basics and build your first projects." }, tag: { ar: "تقنية", en: "Technology" }, color: "lavender", href: "/courses/Programming" },
   { icon: "🌱", title: { ar: "الطبيعة والعلوم", en: "Nature and science" }, text: { ar: "اكتشف العالم من حولك بتجارب ممتعة.", en: "Explore the world around you through fun experiments." }, tag: { ar: "اكتشاف", en: "Discovery" }, color: "mint", href: "/courses/Science" },
 ];
+type PublicHome = { categories: Array<{ slug: string; titleAr: string; titleEn: string; descriptionAr: string; descriptionEn: string; icon: string; theme: string; courses: Array<{ slug: string; titleAr: string; titleEn: string; descriptionAr: string; descriptionEn: string; theme: string }> }>; settings: { homeTitleAr: string; homeTitleEn: string; homeDescriptionAr: string; homeDescriptionEn: string; aboutTextAr: string; aboutTextEn: string; footerTextAr: string; footerTextEn: string } | null };
 
 export default function Page() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -20,8 +21,12 @@ export default function Page() {
   const { courseQuery: query, setCourseQuery: setQuery } = useAppState();
   const { data: session, status } = useSession();
   const { locale, t } = useLocale();
+  const [publicHome, setPublicHome] = useState<PublicHome | null>(null);
+  useEffect(() => { fetch("/api/site").then((response) => response.ok ? response.json() : null).then((value) => { if (value?.categories) setPublicHome(value); }).catch(() => undefined); }, []);
   const isSignedIn = status === "authenticated";
-  const shownCourses = courses.filter((course) => `${course.title[locale]} ${course.text[locale]} ${course.tag[locale]}`.toLowerCase().includes(query.trim().toLowerCase()));
+  const dynamicCourses = publicHome?.categories.map((category) => ({ icon: category.icon, title: { ar: category.titleAr, en: category.titleEn }, text: { ar: category.descriptionAr, en: category.descriptionEn }, tag: { ar: category.courses.length + " كورسات", en: category.courses.length + " courses" }, color: category.theme === "art" ? "peach" : category.theme === "code" ? "lavender" : "mint", href: `/paths/${category.slug}`, subcourses: category.courses })) ?? [];
+  const visibleCourses = dynamicCourses.length ? dynamicCourses : courses;
+  const shownCourses = visibleCourses.filter((course) => `${course.title[locale]} ${course.text[locale]} ${course.tag[locale]}`.toLowerCase().includes(query.trim().toLowerCase()));
 
   return (
     <main>
@@ -44,8 +49,8 @@ export default function Page() {
       <section className="hero" id="home">
         <div className="hero-copy">
           <div className="eyebrow"><span className="eyebrow-leaf">✳</span> {t("heroEyebrow")}</div>
-          <h1>{t("heroLine1")}<br /><span>{t("heroLine2")}</span></h1>
-          <p>{t("heroDescription")}</p>
+          <h1>{publicHome?.settings ? <>{(locale === "ar" ? publicHome.settings.homeTitleAr : publicHome.settings.homeTitleEn).split(" ").slice(0, 3).join(" ")}<br /><span>{(locale === "ar" ? publicHome.settings.homeTitleAr : publicHome.settings.homeTitleEn).split(" ").slice(3).join(" ")}</span></> : <>{t("heroLine1")}<br /><span>{t("heroLine2")}</span></>}</h1>
+          <p>{publicHome?.settings ? (locale === "ar" ? publicHome.settings.homeDescriptionAr : publicHome.settings.homeDescriptionEn) : t("heroDescription")}</p>
           <div className="hero-actions"><a className="button" href="#courses">{t("explorePaths")} <span>←</span></a><a className="text-link" href="#about"><span className="play-icon">▶</span> {t("meetNabta")}</a></div>
           <div className="social-proof"><div className="avatar-stack"><span>🌱</span></div><div><strong>{t("threePaths")}</strong><small>{t("startSmall")}</small></div><span className="proof-star">✦</span></div>
         </div>
@@ -61,12 +66,12 @@ export default function Page() {
 
       <section className="courses-section" id="courses">
         <div className="section-heading"><div><span className="section-kicker">{t("pathsGrow")}</span><h2>{t("whereStart")}</h2><p>{t("choosePath")}</p></div><label className="course-search"><span>⌕</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t("searchPath")} aria-label={t("searchPath")} /></label></div>
-        <div className="course-grid">{shownCourses.length ? shownCourses.map((course, index) => <Link className={`course-card ${course.color}`} href={course.href} key={course.color}><div className="course-top"><span className="course-icon">{course.icon}</span><span className="course-tag">{course.tag[locale]}</span></div><h3>{course.title[locale]}</h3><p>{course.text[locale]}</p><div className="course-bottom"><span>{t("explorePath")}</span><span className="arrow-circle">←</span></div><span className="card-number">0{index + 1}</span></Link>) : <p className="empty-state">{t("noResults")}</p>}</div>
+        <div className="course-grid">{shownCourses.length ? shownCourses.map((course, index) => <Link className={`course-card ${course.color}`} href={course.href} key={course.href}><div className="course-top"><span className="course-icon">{course.icon}</span><span className="course-tag">{course.tag[locale]}</span></div><h3>{course.title[locale]}</h3><p>{course.text[locale]}</p>{"subcourses" in course && Array.isArray(course.subcourses) && <div className="public-course-links">{course.subcourses.map((item: { slug: string; titleAr: string; titleEn: string }) => <span key={item.slug}>· {locale === "ar" ? item.titleAr : item.titleEn}</span>)}</div>}<div className="course-bottom"><span>{t("explorePath")}</span><span className="arrow-circle">←</span></div><span className="card-number">0{index + 1}</span></Link>) : <p className="empty-state">{t("noResults")}</p>}</div>
       </section>
 
-      <section className="about-strip" id="about"><div className="about-leaf">✿</div><div><span className="section-kicker">{t("learnOurWay")}</span><h2>{t("notJustCourses")}<br /><span>{t("spaceToGrow")}</span></h2></div><p>{t("aboutText")}</p><a className="button button-light" href="#courses">{t("ourStory")} <span>←</span></a></section>
+      <section className="about-strip" id="about"><div className="about-leaf">✿</div><div><span className="section-kicker">{t("learnOurWay")}</span><h2>{t("notJustCourses")}<br /><span>{t("spaceToGrow")}</span></h2></div><p>{publicHome?.settings ? (locale === "ar" ? publicHome.settings.aboutTextAr : publicHome.settings.aboutTextEn) : t("aboutText")}</p><a className="button button-light" href="#courses">{t("ourStory")} <span>←</span></a></section>
 
-      <footer id="footer"><a className="brand footer-brand" href="#home"><span className="brand-mark">ن</span><span>{locale === "ar" ? "نبتة" : "Nabta"}<span className="brand-dot">.</span><small>{t("slogan")}</small></span></a><p>{t("footerLine")}</p><span>{t("copyright")}</span></footer>
+      <footer id="footer"><a className="brand footer-brand" href="#home"><span className="brand-mark">ن</span><span>{locale === "ar" ? "نبتة" : "Nabta"}<span className="brand-dot">.</span><small>{t("slogan")}</small></span></a><p>{publicHome?.settings ? (locale === "ar" ? publicHome.settings.footerTextAr : publicHome.settings.footerTextEn) : t("footerLine")}</p><span>{t("copyright")}</span></footer>
     </main>
   );
 }

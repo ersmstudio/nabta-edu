@@ -2,15 +2,41 @@ name: Deploy Nabta Edu
 
 on:
   push:
-    branches: [ main ] # or master
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nabta-production-deploy
+  cancel-in-progress: false
 
 jobs:
   build-and-deploy:
     runs-on: self-hosted
+    timeout-minutes: 45
+    env:
+      AUTH_TRUST_HOST: "true"
+      CODE_RUNNER_URL: http://127.0.0.1:8787/execute
+      PORT: "3000"
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+
+      - name: Check deployment settings and Docker
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
+          ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+          CODE_RUNNER_TOKEN: ${{ secrets.CODE_RUNNER_TOKEN }}
+        run: |
+          test -n "$DATABASE_URL" || { echo "Missing DATABASE_URL Actions secret."; exit 1; }
+          test -n "$AUTH_SECRET" || { echo "Missing AUTH_SECRET Actions secret."; exit 1; }
+          test -n "$ADMIN_EMAIL" || { echo "Missing ADMIN_EMAIL Actions secret."; exit 1; }
+          test -n "$CODE_RUNNER_TOKEN" || { echo "Missing CODE_RUNNER_TOKEN Actions secret."; exit 1; }
+          docker info >/dev/null
+          docker compose version
 
       - name: Install Dependencies
         run: npm install
@@ -18,14 +44,33 @@ jobs:
       - name: Generate Prisma Client
         run: npx prisma generate
 
+      - name: Apply Database Migrations
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: npx prisma migrate deploy
+
       - name: Build Next.js App
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
         run: npm run build
+
+      - name: Build isolated .NET runtime image
+        run: docker build -f code-runner/Runtime.Dockerfile -t nabta-csharp-sandbox:8.0 code-runner
+
+      - name: Start or update C# runner service
+        env:
+          CODE_RUNNER_TOKEN: ${{ secrets.CODE_RUNNER_TOKEN }}
+        run: docker compose -f docker-compose.sandbox.yml up -d --build
 
       - name: Restart Application with PM2
         env:
-          PORT: 3000
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
+          ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+          CODE_RUNNER_TOKEN: ${{ secrets.CODE_RUNNER_TOKEN }}
         run: |
-          npm install -g pm2 || true
+          command -v pm2 >/dev/null 2>&1 || npm install -g pm2
           pm2 delete nabta-edu || true
           pm2 start npm --name "nabta-edu" --cwd "$GITHUB_WORKSPACE" -- start
           pm2 save
@@ -33,7 +78,7 @@ jobs:
       - name: Verify deployed homepage
         run: |
           for attempt in $(seq 1 15); do
-            if curl --fail --silent http://127.0.0.1:3000/ | grep -Fq "كل فكرة حلوة"; then
+            if curl --fail --silent http://127.0.0.1:3000/ | grep -Fq "نبتة"; then
               echo "Nabta homepage is responding with the deployed version."
               exit 0
             fi

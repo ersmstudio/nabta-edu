@@ -14,19 +14,190 @@ enum Role {
   ADMIN
 }
 
+enum ContentStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum QuestionType {
+  SINGLE_CHOICE
+  MULTIPLE_CHOICE
+  DROPDOWN
+  TRUE_FALSE
+  SHORT_ANSWER
+  LONG_ANSWER
+}
+
 model User {
   id            String    @id @default(cuid())
   name          String?
   email         String?   @unique
   emailVerified DateTime?
   image         String?
-  password      String?   // لو سيتم استخدام Email + Password
+  password      String? // لو سيتم استخدام Email + Password
   role          Role      @default(STUDENT)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  accounts      Account[]
-  sessions      Session[]
+  accounts        Account[]
+  sessions        Session[]
+  quizAttempts    QuizAttempt[]
+  codeSubmissions CodeSubmission[]
+  lessonProgress  LessonProgress[]
+}
+
+model CourseCategory {
+  id            String   @id @default(cuid())
+  slug          String   @unique
+  titleAr       String
+  titleEn       String
+  descriptionAr String   @db.Text
+  descriptionEn String   @db.Text
+  icon          String   @default("📚")
+  theme         String   @default("code")
+  sortOrder     Int      @default(0)
+  published     Boolean  @default(true)
+  courses       Course[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Course {
+  id            String         @id @default(cuid())
+  categoryId    String
+  category      CourseCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  slug          String         @unique
+  titleAr       String
+  titleEn       String
+  descriptionAr String         @db.Text
+  descriptionEn String         @db.Text
+  imageUrl      String?
+  theme         String         @default("code")
+  status        ContentStatus  @default(DRAFT)
+  sortOrder     Int            @default(0)
+  lessons       Lesson[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@index([categoryId, status, sortOrder])
+}
+
+model Lesson {
+  id             String           @id @default(cuid())
+  courseId       String
+  course         Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  slug           String
+  titleAr        String
+  titleEn        String
+  descriptionAr  String           @db.Text
+  descriptionEn  String           @db.Text
+  videoUrl       String?
+  transcript     String           @default("") @db.Text
+  sortOrder      Int              @default(0)
+  status         ContentStatus    @default(DRAFT)
+  quizQuestions  QuizQuestion[]
+  quizAttempts   QuizAttempt[]
+  codeChallenges CodeChallenge[]
+  progress       LessonProgress[]
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@unique([courseId, slug])
+  @@index([courseId, status, sortOrder])
+}
+
+model QuizQuestion {
+  id             String       @id @default(cuid())
+  lessonId       String
+  lesson         Lesson       @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  type           QuestionType
+  promptAr       String       @db.Text
+  promptEn       String       @db.Text
+  options        Json         @default("[]")
+  correctAnswers Json         @default("[]")
+  explanationAr  String       @default("") @db.Text
+  explanationEn  String       @default("") @db.Text
+  points         Int          @default(1)
+  sortOrder      Int          @default(0)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([lessonId, sortOrder])
+}
+
+model QuizAttempt {
+  id          String   @id @default(cuid())
+  lessonId    String
+  userId      String
+  answers     Json
+  score       Float
+  maxScore    Float
+  needsReview Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  lesson      Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, lessonId, createdAt])
+}
+
+model CodeChallenge {
+  id          String           @id @default(cuid())
+  lessonId    String
+  lesson      Lesson           @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  titleAr     String
+  titleEn     String
+  promptAr    String           @db.Text
+  promptEn    String           @db.Text
+  language    String           @default("csharp")
+  starterCode String           @default("") @db.Text
+  testCases   Json             @default("[]")
+  sortOrder   Int              @default(0)
+  submissions CodeSubmission[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@index([lessonId, sortOrder])
+}
+
+model CodeSubmission {
+  id          String        @id @default(cuid())
+  challengeId String
+  challenge   CodeChallenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sourceCode  String        @db.Text
+  results     Json
+  passed      Boolean
+  createdAt   DateTime      @default(now())
+
+  @@index([challengeId, createdAt])
+  @@index([userId, createdAt])
+}
+
+model LessonProgress {
+  id          String   @id @default(cuid())
+  lessonId    String
+  userId      String
+  completedAt DateTime @default(now())
+  lesson      Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([lessonId, userId])
+  @@index([userId, completedAt])
+}
+
+model SiteSettings {
+  id                String   @id @default("main")
+  homeTitleAr       String   @default("كل فكرة حلوة تستاهل تكبر.")
+  homeTitleEn       String   @default("Every good idea deserves to grow.")
+  homeDescriptionAr String   @default("تعلّم الأنيميشن والبرمجة واكتشف عوالم جديدة، خطوة بخطوة.") @db.Text
+  homeDescriptionEn String   @default("Learn animation and coding, and explore new worlds step by step.") @db.Text
+  aboutTextAr       String   @default("في نبتة نؤمن أن كل شخص عنده بذرة موهبة.") @db.Text
+  aboutTextEn       String   @default("At Nabta, we believe everyone has a seed of talent.") @db.Text
+  footerTextAr      String   @default("كل يوم فرصة جديدة للنمو") @db.Text
+  footerTextEn      String   @default("Every day is a new chance to grow") @db.Text
+  updatedAt         DateTime @updatedAt
 }
 
 model Account {

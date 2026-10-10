@@ -1,0 +1,16 @@
+services:
+  csharp-runner:
+    build:
+      context: ./code-runner
+      dockerfile: Dockerfile
+    environment:
+      CODE_RUNNER_TOKEN: ${CODE_RUNNER_TOKEN:?set a long random CODE_RUNNER_TOKEN}
+      CSHARP_SANDBOX_IMAGE: nabta-csharp-sandbox:8.0
+    ports:
+      - "127.0.0.1:8787:8787"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,noexec,nosuid
