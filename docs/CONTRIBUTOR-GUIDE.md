@@ -6,7 +6,7 @@
 
 نبتة منصة تعلّم وإبداع تستهدف من يريد البدء في مجال جديد بخطوات سهلة. التجربة عربية وإنجليزية، واتجاه الصفحة يتبدل مع اللغة. تتكون المنصة من واجهة عامة، ومسارات وكورسات، وحسابات للمتعلمين، وتجربة دروس واختبارات، ولوحة لإدارة المحتوى.
 
-المكدس الحالي: Next.js 15 App Router، React 19، TypeScript، Tailwind CSS 4، Auth.js، Prisma 6، وPostgreSQL. مشغّل C# خدمة منفصلة تعمل بـNode وDocker و.NET 8.
+المكدس الحالي: Next.js 15 App Router، React 19، TypeScript، Tailwind CSS 4، Auth.js، Prisma 6، وPostgreSQL. مشغّل C# خدمة منفصلة تعمل بـNode وDocker و.NET 8. الإنتاج الأساسي على سيرفر البيت T3500 عبر GitHub Actions، بينما Vercel وPrisma Postgres مخصصان للمعاينة والعرض المبدئي.
 
 ## 2. ما الذي يستطيع الزائر فعله؟
 
@@ -61,10 +61,11 @@ npm install
 Copy-Item .env.example .env
 ```
 
-عدّل `.env` المحلي بهذه القيم، مع استبدال بيانات PostgreSQL:
+عدّل `.env` المحلي بهذه القيم لاستخدام قاعدة تطوير محلية. لا تنسخ قيم الإنتاج أو المعاينة إلى هذا الملف.
 
 ```dotenv
 DATABASE_URL="postgresql://USER:PASSWORD@localhost:5432/nabta_edu_dev?schema=public"
+DIRECT_URL="postgresql://USER:PASSWORD@localhost:5432/nabta_edu_dev?schema=public"
 AUTH_SECRET="قيمة-عشوائية-طويلة-للتطوير-المحلي"
 AUTH_TRUST_HOST=true
 ADMIN_EMAIL="البريد-الذي-ستسجل-به-للوحة-الإدارة@example.com"
@@ -91,6 +92,8 @@ npx prisma migrate dev --name describe-the-change
 ```
 
 أضف ملف migration الجديد مع التغيير إلى Git. لا تستخدم قاعدة الإنتاج أثناء التطوير، ولا تستخدم `migrate reset` على بيانات مهمة.
+
+لبيئة Vercel Preview، اجعل `DATABASE_URL` رابط Prisma Postgres المجمّع و`DIRECT_URL` رابطه المباشر. ولإنتاج T3500، اجعل أسرار GitHub Actions تشير إلى قاعدة الإنتاج التي يستخدمها السيرفر. محليًا يمكن أن يشير المتغيران إلى القاعدة المحلية نفسها. لا تشغّل `migrate dev` على قاعدة الإنتاج؛ يطبق النشر migrations الموجودة باستخدام `npx prisma migrate deploy`.
 
 ### د. تشغيل تمارين C# محليًا (اختياري)
 
@@ -165,8 +168,8 @@ npm run db:seed   # إضافة بيانات التطوير الأولية
 - راجع `git diff` وتأكد ألا يظهر `.env` أو أي مفتاح أو بيانات شخصية.
 - شغّل `npm run lint` و`npm run build`، وطبّق migrations على قاعدة تطوير أولًا.
 - لا تنشر محتوى تجريبيًا أو إجابات صحيحة/حالات اختبار في واجهة عامة.
-- نشر المشروع الحالي مرتبط بفرع `main` وGitHub Actions على self-hosted runner؛ كل push إلى `main` يشغّل النشر. لا تدفع تغييرات إلى `main` بغرض التجربة. راجع إعداد النشر والأسرار في [دليل مشغّل C#](./C-SHARP-RUNNER.md) وملف `.github/workflows/deploy.yml` قبل أي نشر مقصود.
-- تأكد أن أسرار الإنتاج مثل `DATABASE_URL` و`AUTH_SECRET` و`ADMIN_EMAIL` و`CODE_RUNNER_TOKEN` مضبوطة في GitHub Actions وفي بيئة الخادم، وأن قاعدة الإنتاج هي الوجهة المقصودة للـmigration.
+- نشر إنتاج T3500 مرتبط بفرع `main` وGitHub Actions على self-hosted runner؛ كل push إلى `main` يشغّل النشر. Vercel ينشر معاينات الفروع، ويستخدم Prisma Postgres للمعاينة فقط. لا تدفع تغييرات إلى `main` بغرض التجربة.
+- تأكد أن أسرار GitHub Actions مثل `DATABASE_URL` و`DIRECT_URL` و`AUTH_SECRET` و`ADMIN_EMAIL` و`CODE_RUNNER_TOKEN` تخص بيئة T3500 الإنتاجية. إعدادات Vercel Preview منفصلة وتشير إلى قاعدة المعاينة.
 
 ## 8. أسلوب العمل المقترح مع المساهم
 

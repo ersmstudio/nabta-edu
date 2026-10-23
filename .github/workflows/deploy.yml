@@ -27,11 +27,13 @@ jobs:
       - name: Check deployment settings and Docker
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
           AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
           ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
           CODE_RUNNER_TOKEN: ${{ secrets.CODE_RUNNER_TOKEN }}
         run: |
           test -n "$DATABASE_URL" || { echo "Missing DATABASE_URL Actions secret."; exit 1; }
+          test -n "$DIRECT_URL" || { echo "Missing DIRECT_URL Actions secret."; exit 1; }
           test -n "$AUTH_SECRET" || { echo "Missing AUTH_SECRET Actions secret."; exit 1; }
           test -n "$ADMIN_EMAIL" || { echo "Missing ADMIN_EMAIL Actions secret."; exit 1; }
           test -n "$CODE_RUNNER_TOKEN" || { echo "Missing CODE_RUNNER_TOKEN Actions secret."; exit 1; }
@@ -47,6 +49,7 @@ jobs:
       - name: Apply Database Migrations
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
         run: npx prisma migrate deploy
 
       - name: Build Next.js App
@@ -66,6 +69,7 @@ jobs:
       - name: Restart Application with PM2
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
           AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
           ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
           CODE_RUNNER_TOKEN: ${{ secrets.CODE_RUNNER_TOKEN }}
