@@ -16,9 +16,12 @@
 
 ملف `.github/workflows/deploy.yml` يبني صورة .NET، ثم يشغّل أو يحدّث خدمة المشغّل قبل إعادة تشغيل Next.js. أضف هذه القيم في **GitHub → Settings → Secrets and variables → Actions → New repository secret**:
 
-- `DATABASE_URL`: عنوان قاعدة PostgreSQL التي يستخدمها الموقع على السيرفر.
+- `DATABASE_URL`: رابط قاعدة الإنتاج التي يستخدمها تطبيق T3500 وقت التشغيل.
+- `DIRECT_URL`: رابط الاتصال المباشر بقاعدة T3500 الذي يستخدمه Prisma لتطبيق migrations. يمكن أن يساوي `DATABASE_URL` إذا لم تستخدم قاعدة مجمّعة.
 - `AUTH_SECRET`: سر عشوائي طويل لجلسات تسجيل الدخول.
 - `ADMIN_EMAIL`: البريد المسجل في الموقع والمسموح له بلوحة الإدارة.
 - `CODE_RUNNER_TOKEN`: سر عشوائي بطول 32 حرفًا على الأقل.
 
 يجب أن يكون Docker Engine وDocker Compose متاحين لمستخدم الـ self-hosted runner. بعد تعديل الـ workflow، كل push إلى `main` يثبت الحزم، يطبّق migrations، يبني الموقع وصورة C#، ثم يشغّل الخدمتين. تحقق أن `DATABASE_URL` يشير لقاعدة الإنتاج قبل أول نشر. منفذ المشغّل مربوط محليًا على `127.0.0.1:8787`، ولا يحتاج فتحه في الجدار الناري.
+
+قاعدة Prisma Postgres الموصولة بـVercel مخصصة لمعاينات Vercel وليست بديلًا عن قاعدة الإنتاج على T3500. استخدم بيانات اعتماد منفصلة لكل بيئة.
