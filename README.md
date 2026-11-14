@@ -9,6 +9,7 @@
 - المساهمون الجدد: [دليل المساهم وبيئة التطوير المحلية](docs/CONTRIBUTOR-GUIDE.md).
 - تجهيز الدورات والصفحات: [دليل صفحات الكورسات](docs/COURSE-PAGES.md).
 - لوحة الإدارة: [دليل لوحة الإدارة](docs/ADMIN-DASHBOARD.md).
+- تطوير واجهات المستخدم: [دليل Storybook](docs/STORYBOOK.md).
 - تشغيل تمارين C#: [دليل مشغّل C#](docs/C-SHARP-RUNNER.md).
 - تقديم المشروع للمساهمين: [نص فيديو التعريف](docs/YOUTUBE-INTRO-SCRIPT.md).
 
